@@ -60,6 +60,33 @@ def prompt_form(prompt=None):
 st.title("Promptbase")
 st.subheader("A simple app to store and retrieve prompts")
 
+# Search Feature
+search_query = st.text_input("Search prompts", "")
+if search_query:
+    # 使用 ILIKE 实现不区分大小写的搜索
+    cur.execute("SELECT * FROM prompts WHERE title ILIKE %s OR prompt ILIKE %s", (f'%{search_query}%', f'%{search_query}%'))
+else:
+    cur.execute("SELECT * FROM prompts")
+prompts = cur.fetchall()
+
+# Sort Feature
+sort_order = st.selectbox("Sort by", ["Newest", "Oldest"])
+
+if search_query:
+    if sort_order == "Newest":
+        cur.execute("SELECT * FROM prompts WHERE title ILIKE %s OR prompt ILIKE %s ORDER BY created_at DESC", (f'%{search_query}%', f'%{search_query}%'))
+    else:  # Oldest
+        cur.execute("SELECT * FROM prompts WHERE title ILIKE %s OR prompt ILIKE %s ORDER BY created_at ASC", (f'%{search_query}%', f'%{search_query}%'))
+else:
+    if sort_order == "Newest":
+        cur.execute("SELECT * FROM prompts ORDER BY created_at DESC")
+    else:  # Oldest
+        cur.execute("SELECT * FROM prompts ORDER BY created_at ASC")
+
+prompts = cur.fetchall()
+
+
+
 prompt = prompt_form()
 if prompt:
     cur.execute("INSERT INTO prompts (title, prompt, is_favorite) VALUES (%s, %s, %s)", (prompt.title, prompt.prompt, prompt.is_favorite))
